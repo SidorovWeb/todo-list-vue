@@ -18,52 +18,20 @@
                 :todo="todo"
                 :index="index"
                 :checkAll="!anyRemaining"
-                @removedTodo="removedTodo"
-                @finishedEdit="finishedEdit"
             >
             </todo-item>
         </transition-group>
         <div class="extra-container">
-            <label>
-                <input
-                    type="checkbox"
-                    :checked="!anyRemaining"
-                    @change="checkAllTodos"
-                />
-                Выбрать все
-            </label>
-            <div>{{ remaining }} items left</div>
+            <todo-check-all :anyRemaining="anyRemaining"></todo-check-all>
+            <todo-items-remaining :remaining="remaining"></todo-items-remaining>
         </div>
         <div class="extra-container">
-            <div>
-                <button
-                    :class="{ active: filter == 'all' }"
-                    @click="filter = 'all'"
-                >
-                    Все
-                </button>
-                <button
-                    :class="{ active: filter == 'active' }"
-                    @click="filter = 'active'"
-                >
-                    Активные
-                </button>
-
-                <button
-                    :class="{ active: filter == 'completed' }"
-                    @click="filter = 'completed'"
-                >
-                    Завершенные
-                </button>
-            </div>
+            <todo-filtered></todo-filtered>
             <div>
                 <transition name="fade">
-                    <button
-                        v-if="showClearCompletedButton"
-                        @click="clearCompletedButton"
-                    >
-                        Удалить Завершенные
-                    </button>
+                    <todo-clear-completed
+                        :showClearCompletedButton="showClearCompletedButton"
+                    ></todo-clear-completed>
                 </transition>
             </div>
         </div>
@@ -72,9 +40,19 @@
 
 <script>
 import TodoItem from './TodoItem';
+import TodoItemsRemaining from './TodoItemsRemaining';
+import TodoCheckAll from './TodoCheckAll';
+import TodoFiltered from './TodoFiltered';
+import TodoClearCompleted from './TodoClearCompleted';
 export default {
     name: 'todo-list',
-    components: { TodoItem },
+    components: {
+        TodoItem,
+        TodoItemsRemaining,
+        TodoCheckAll,
+        TodoFiltered,
+        TodoClearCompleted
+    },
     data() {
         return {
             newTodo: '',
@@ -96,6 +74,22 @@ export default {
                 }
             ]
         };
+    },
+    created() {
+        eventBus.$on('removedTodo', index => this.removedTodo(index));
+        eventBus.$on('finishedEdit', data => this.finishedEdit(data));
+        eventBus.$on('checkAllChanged', checked => this.checkAllTodos(checked));
+        eventBus.$on('filterChanged', filter => (this.filter = filter));
+        eventBus.$on('clearCompletedTodos', () => this.clearCompleted());
+    },
+    beforeDestroy() {
+        eventBus.$off('removedTodo', index => this.removedTodo(index));
+        eventBus.$off('finishedEdit', data => this.finishedEdit(data));
+        eventBus.$off('checkAllChanged', checked =>
+            this.checkAllTodos(checked)
+        );
+        eventBus.$off('filterChanged', filter => (this.filter = filter));
+        eventBus.$off('clearCompletedTodos', () => this.clearCompleted());
     },
     computed: {
         remaining() {
@@ -133,14 +127,14 @@ export default {
             this.newTodo = '';
             this.idForTodo++;
         },
-        removedTodo(index) {
-            this.todos.splice(index, 1);
-        },
         checkAllTodos() {
             this.todos.forEach(todo => (todo.completed = event.target.checked));
         },
-        clearCompletedButton() {
+        clearCompleted() {
             this.todos = this.todos.filter(todo => !todo.completed);
+        },
+        removedTodo(index) {
+            this.todos.splice(index, 1);
         },
         finishedEdit(data) {
             this.todos.splice(data.index, 1, data.todo);

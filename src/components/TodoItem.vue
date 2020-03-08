@@ -21,8 +21,11 @@
                 v-focus
             />
         </div>
-        <div class="remove-item" @click="removedTodo(index)">
-            &times;
+        <div>
+            <button @click="pluralize">Plural</button>
+            <span class="remove-item" @click="removedTodo(index)">
+                &times;
+            </span>
         </div>
     </div>
 </template>
@@ -53,6 +56,12 @@ export default {
             beforeEditCashe: ''
         };
     },
+    created() {
+        eventBus.$on('pluralize', this.handlePluralize);
+    },
+    beforeDestroy() {
+        eventBus.$off('pluralize', this.handlePluralize);
+    },
     directives: {
         focus: {
             inserted: function(el) {
@@ -67,7 +76,7 @@ export default {
     },
     methods: {
         removedTodo(index) {
-            this.$emit('removedTodo', index);
+            eventBus.$emit('removedTodo', index);
         },
         editTodo() {
             this.beforeEditCashe = this.title;
@@ -78,7 +87,7 @@ export default {
                 this.title = this.beforeEditCashe;
             }
             this.editing = false;
-            this.$emit('finishedEdit', {
+            eventBus.$emit('finishedEdit', {
                 index: this.index,
                 todo: {
                     id: this.id,
@@ -91,6 +100,21 @@ export default {
         cancelEdit() {
             this.title = this.beforeEditCashe;
             this.editing = false;
+        },
+        pluralize() {
+            eventBus.$emit('pluralize');
+        },
+        handlePluralize() {
+            this.title = this.title + 's';
+            eventBus.$emit('finishedEdit', {
+                index: this.index,
+                todo: {
+                    id: this.id,
+                    title: this.title,
+                    completed: this.completed,
+                    editing: this.editing
+                }
+            });
         }
     }
 };
