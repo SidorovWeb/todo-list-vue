@@ -54,22 +54,15 @@ export default {
     data() {
         return {
             newTodo: '',
-            idForTodo: 3,
-            beforeEditCashe: ''
+            idForTodo: 3
         };
     },
     computed: {
-        remaining() {
-            return this.$store.getters.remaining;
-        },
         anyRemaining() {
             return this.$store.getters.anyRemaining;
         },
         todosFiltered() {
             return this.$store.getters.todosFiltered;
-        },
-        showClearCompletedButton() {
-            return this.$store.getters.showClearCompletedButton;
         }
     },
 
